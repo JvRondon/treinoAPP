@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Treinos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding-top: 20px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .edit-btn {
+            position: absolute;
+            top: 20px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .edit-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .workout-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .workout-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .workout-card:nth-child(2) { border-left-color: #4ecdc4; }
+        .workout-card:nth-child(3) { border-left-color: #ffe66d; }
+        .workout-card:nth-child(4) { border-left-color: #95e1d3; }
+
+        .workout-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .workout-card h2 {
+            font-size: 24px;
+            color: #2d3436;
+            margin-bottom: 8px;
+        }
+
+        .workout-card .icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .edit-controls {
+            display: none;
+            margin-top: 15px;
+            gap: 8px;
+        }
+
+        .edit-mode .edit-controls {
+            display: flex;
+        }
+
+        .edit-mode .workout-card {
+            cursor: default;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit {
+            background: #0984e3;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-edit:hover, .btn-delete:hover {
+            opacity: 0.8;
+        }
+
+        .add-workout-btn {
+            display: none;
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .edit-mode .add-workout-btn {
+            display: block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-content h2 {
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .exercise {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #0984e3;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .exercise.completed {
+            background: #d4edda;
+            opacity: 0.7;
+        }
+
+        .exercise.completed strong {
+            text-decoration: line-through;
+        }
+
+        .exercise-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .exercise-content {
+            flex: 1;
+        }
+
+        .exercise strong {
+            display: block;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+
+        .exercise span {
+            color: #636e72;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3436;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #0984e3;
+        }
+
+        .icon-selector {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .icon-option {
+            padding: 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 28px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .icon-option:hover {
+            border-color: #0984e3;
+            transform: scale(1.1);
+        }
+
+        .icon-option.selected {
+            border-color: #0984e3;
+            background: #e3f2fd;
+        }
+
+        .exercise-list {
+            margin-top: 20px;
+        }
+
+        .exercise-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .exercise-item input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
+        }
+
+        .exercise-item .sets-input {
+            max-width: 120px;
+        }
+
+        .exercise-item button {
+            padding: 8px 12px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .add-exercise-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .save-btn {
+            background: #0984e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="header">
+            <h1>💪 Meus Treinos</h1>
+            <p>Upper Lower - 4x por semana</p>
+            <button class="edit-btn" onclick="app.toggleEditMode()">✏️</button>
+        </div>
+
+        <div class="workout-list" id="workout-list"></div>
+        
+        <button class="add-workout-btn" onclick="app.addNewWorkout()">➕ Adicionar Novo Treino</button>
+    </div>
+
+    <div id="view-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="app.closeViewModal()">×</button>
+            <div id="view-modal-content"></div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="app.closeEditModal()">×</button>
+            <h2>Editar Treino</h2>
+            
+            <div class="form-group">
+                <label>Nome do Treino</label>
+                <input type="text" id="edit-name" placeholder="Ex: Treino A">
+            </div>
+
+            <div class="form-group">
+                <label>Descrição</label>
+                <input type="text" id="edit-desc" placeholder="Ex: UPPER - Membros Superiores">
+            </div>
+
+            <div class="form-group">
+                <label>Ícone</label>
+                <div class="icon-selector" id="icon-selector"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Exercícios</label>
+                <div class="exercise-list" id="exercise-list"></div>
+                <button class="add-exercise-btn" onclick="app.addExerciseField()">➕ Adicionar Exercício</button>
+            </div>
+
+            <button class="save-btn" onclick="app.saveWorkout()">💾 Salvar Alterações</button>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            editMode: false,
+            currentEditId: null,
+            selectedIcon: '💪',
+            
+            workouts: {
+                'a': {
+                    name: 'Treino A',
+                    desc: 'UPPER - Membros Superiores',
+                    icon: '💪',
+                    exercises: [
+                        { name: 'Supino Reto', sets: '4 séries' },
+                        { name: 'Barra Fixa', sets: '4 séries' },
+                        { name: 'Supino Inclinado com Halteres', sets: '3 séries' },
+                        { name: 'Remada Peito Apoiado', sets: '3 séries' },
+                        { name: 'Elevação Lateral', sets: '3 séries' },
+                        { name: 'Preacher Curl', sets: '3 séries' },
+                        { name: 'Overhead Extension', sets: '3 séries' }
+                    ]
+                },
+                'b': {
+                    name: 'Treino B',
+                    desc: 'LOWER - Membros Inferiores',
+                    icon: '🦵',
+                    exercises: [
+                        { name: 'Agachamento', sets: '4 séries' },
+                        { name: 'Levantamento Terra', sets: '4 séries' },
+                        { name: 'Cadeira Extensora', sets: '3 séries' },
+                        { name: 'Cadeira Flexora', sets: '3 séries' },
+                        { name: 'Passada com Peso', sets: '3 séries' },
+                        { name: 'Panturrilha em Pé', sets: '4 séries' },
+                        { name: 'Abdômen na Polia', sets: '3 séries' }
+                    ]
+                },
+                'c': {
+                    name: 'Treino C',
+                    desc: 'UPPER - Variação',
+                    icon: '🏋️',
+                    exercises: [
+                        { name: 'Dips', sets: '4 séries' },
+                        { name: 'Pulldown', sets: '4 séries' },
+                        { name: 'Fly Machine', sets: '3 séries' },
+                        { name: 'Remada Baixa', sets: '3 séries' },
+                        { name: 'Polia Alta para Peitoral', sets: '3 séries' },
+                        { name: 'Bayesian Curl on Cable', sets: '3 séries' },
+                        { name: 'Single Arm Pushdown', sets: '3 séries' }
+                    ]
+                },
+                'd': {
+                    name: 'Treino D',
+                    desc: 'LOWER - Variação',
+                    icon: '🦿',
+                    exercises: [
+                        { name: 'RDL', sets: '4 séries' },
+                        { name: 'Agachamento', sets: '4 séries (variação)' },
+                        { name: 'Passada com Peso', sets: '3 séries' },
+                        { name: 'Cadeira Flexora', sets: '3 séries' },
+                        { name: 'Cadeira Extensora', sets: '3 séries' },
+                        { name: 'Panturrilha em Pé', sets: '4 séries' },
+                        { name: 'Abdômen na Polia', sets: '3 séries' }
+                    ]
+                }
+            },
+
+            init() {
+                this.renderWorkouts();
+                this.renderIconSelector();
+                
+                // Fechar modal ao clicar fora
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.remove('active');
+                        }
+                    });
+                });
+            },
+
+            toggleEditMode() {
+                this.editMode = !this.editMode;
+                const container = document.getElementById('app');
+                const btn = document.querySelector('.edit-btn');
+                
+                if (this.editMode) {
+                    container.classList.add('edit-mode');
+                    btn.classList.add('active');
+                } else {
+                    container.classList.remove('edit-mode');
+                    btn.classList.remove('active');
+                }
+            },
+
+            renderWorkouts() {
+                const list = document.getElementById('workout-list');
+                list.innerHTML = '';
+                
+                Object.keys(this.workouts).forEach(id => {
+                    const workout = this.workouts[id];
+                    const card = document.createElement('div');
+                    card.className = 'workout-card';
+                    card.innerHTML = `
+                        <h2>
+                            <span class="icon">${workout.icon}</span>
+                            ${workout.name}
+                        </h2>
+                        <p>${workout.desc}</p>
+                        <div class="edit-controls">
+                            <button class="btn-edit" onclick="event.stopPropagation(); app.editWorkout('${id}')">✏️ Editar</button>
+                            <button class="btn-delete" onclick="event.stopPropagation(); app.deleteWorkout('${id}')">🗑️ Excluir</button>
+                        </div>
+                    `;
+                    
+                    card.addEventListener('click', () => {
+                        if (!this.editMode) {
+                            this.viewWorkout(id);
+                        }
+                    });
+                    
+                    list.appendChild(card);
+                });
+            },
+
+            viewWorkout(id) {
+                const workout = this.workouts[id];
+                let html = `<h2>${workout.name}</h2>`;
+                
+                workout.exercises.forEach((ex, i) => {
+                    html += `
+                        <div class="exercise">
+                            <input type="checkbox" class="exercise-checkbox" onchange="this.parentElement.classList.toggle('completed')">
+                            <div class="exercise-content">
+                                <strong>${i + 1}. ${ex.name}</strong>
+                                <span>${ex.sets}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('view-modal-content').innerHTML = html;
+                document.getElementById('view-modal').classList.add('active');
+            },
+
+            closeViewModal() {
+                document.getElementById('view-modal').classList.remove('active');
+            },
+
+            editWorkout(id) {
+                this.currentEditId = id;
+                const workout = this.workouts[id];
+                
+                document.getElementById('edit-name').value = workout.name;
+                document.getElementById('edit-desc').value = workout.desc;
+                this.selectedIcon = workout.icon;
+                
+                // Atualizar seleção de ícone
+                document.querySelectorAll('.icon-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.textContent === this.selectedIcon);
+                });
+                
+                // Renderizar exercícios
+                const list = document.getElementById('exercise-list');
+                list.innerHTML = '';
+                workout.exercises.forEach(ex => {
+                    this.addExerciseField(ex.name, ex.sets);
+                });
+                
+                document.getElementById('edit-modal').classList.add('active');
+            },
+
+            addExerciseField(name = '', sets = '3 séries') {
+                const list = document.getElementById('exercise-list');
+                const item = document.createElement('div');
+                item.className = 'exercise-item';
+                item.innerHTML = `
+                    <input type="text" class="name-input" placeholder="Nome do exercício" value="${name}">
+                    <input type="text" class="sets-input" placeholder="Séries" value="${sets}">
+                    <button onclick="this.parentElement.remove()">❌</button>
+                `;
+                list.appendChild(item);
+            },
+
+            renderIconSelector() {
+                const icons = ['💪', '🏋️', '🦵', '🦿', '🔥', '⚡', '💯', '🎯', '🏃', '🚴', '🤸', '🥊'];
+                const selector = document.getElementById('icon-selector');
+                
+                icons.forEach(icon => {
+                    const opt = document.createElement('div');
+                    opt.className = 'icon-option';
+                    opt.textContent = icon;
+                    opt.onclick = () => {
+                        this.selectedIcon = icon;
+                        document.querySelectorAll('.icon-option').forEach(o => {
+                            o.classList.remove('selected');
+                        });
+                        opt.classList.add('selected');
+                    };
+                    selector.appendChild(opt);
+                });
+            },
+
+            saveWorkout() {
+                const name = document.getElementById('edit-name').value;
+                const desc = document.getElementById('edit-desc').value;
+                const exercises = [];
+                
+                document.querySelectorAll('#exercise-list .exercise-item').forEach(item => {
+                    const exName = item.querySelector('.name-input').value;
+                    const exSets = item.querySelector('.sets-input').value;
+                    if (exName.trim()) {
+                        exercises.push({ name: exName, sets: exSets });
+                    }
+                });
+                
+                this.workouts[this.currentEditId] = {
+                    name: name,
+                    desc: desc,
+                    icon: this.selectedIcon,
+                    exercises: exercises
+                };
+                
+                this.renderWorkouts();
+                this.closeEditModal();
+                alert('Treino atualizado com sucesso! ✅');
+            },
+
+            closeEditModal() {
+                document.getElementById('edit-modal').classList.remove('active');
+            },
+
+            deleteWorkout(id) {
+                if (confirm('Tem certeza que deseja excluir este treino?')) {
+                    delete this.workouts[id];
+                    this.renderWorkouts();
+                    alert('Treino excluído! 🗑️');
+                }
+            },
+
+            addNewWorkout() {
+                const newId = 'workout_' + Date.now();
+                this.workouts[newId] = {
+                    name: 'Novo Treino',
+                    desc: 'Descrição do treino',
+                    icon: '🔥',
+                    exercises: []
+                };
+                this.renderWorkouts();
+                this.editWorkout(newId);
+            }
+        };
+
+        // Inicializar app
+        app.init();
+    </script>
+</body>
+</html>
